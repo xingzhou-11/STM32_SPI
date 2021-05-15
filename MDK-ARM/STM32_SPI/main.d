@@ -26,5 +26,10 @@ stm32_spi\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash.h
 stm32_spi\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash_ex.h
 stm32_spi\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pwr.h
 stm32_spi\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_spi.h
+stm32_spi\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h
 stm32_spi\main.o: ../Inc/spi.h
+stm32_spi\main.o: ../Inc/usart.h
+stm32_spi\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
 stm32_spi\main.o: ../Inc/gpio.h
+stm32_spi\main.o: ../Inc/w25q64.h
+stm32_spi\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h

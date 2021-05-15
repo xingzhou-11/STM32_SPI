@@ -8,22 +8,25 @@ extern SPI_HandleTypeDef hspi2;
 
 //读取SPI Flash ID
 //Date		读取到的ID
-uint32_t SPI_FLASH_ReadID(uint32_t Date)
+uint32_t SPI_FLASH_ReadID(uint32_t *p_buffer)
 {
 	uint8_t temp[3]={0};
 	
+	//使能NSS信号线
+	//发送读取ID指令
 	W25X_NSS_Enabled();
 	SPI_FLASH_Send(W25X_JedecDeviceID);
 	
-	if(HAL_SPI_Receive(&hspi2, temp, 3, 0xff) == HAL_OK)
-	{
-		Date = (uint32_t)temp[0] << 16 | (uint32_t)temp[1] << 8 | (uint32_t)temp[2];
-		return 0;
-	}
-	else
-		return 1;
+	//读取ID并存入temp
+	//判断是否成功读取等待读成功
+	HAL_SPI_Receive(&hspi2, temp, 3, 0xff);
+	while(HAL_SPI_Receive(&hspi2, temp, 3, 0xff) != HAL_OK);
+	*p_buffer = (temp[0] << 16) | (temp[1] << 8) | (temp[2]);
 	
+	//失能NSS信号线
 	W25X_NSS_Disabled();
+	
+	return 0;
 }
 
 
@@ -56,7 +59,7 @@ void SPI_FLASH_WaitEnd(void)
 
 //SPI Flash 扇区擦除	输入地址对齐4KB
 //SectorAdd	要擦除的扇区地址
-void SPI_FLASH_SectorErase(uint32_t SectorAdd)
+void SPI_FLASH_Sector_Erase(uint32_t SectorAdd)
 {
 	//发送写使能
 	//等待FLASH空闲
@@ -79,10 +82,10 @@ void SPI_FLASH_SectorErase(uint32_t SectorAdd)
 
 
 //SPI Flash 页写入
-//pBuffer		要写入的数据的指针
-//WriteAddr		要写入的数据的地址
+//pBuffer		要写入的数据的地址
+//WriteAddr		FLASH中写数据的地址
 //DataLength	要写入的数据长度
-void SPI_FLASH_PageWrite(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t DataLength)
+void SPI_FLASH_Page_Write(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t DataLength)
 {
 	//使能NSS信号线
 	//等待FLASH空闲
@@ -96,9 +99,7 @@ void SPI_FLASH_PageWrite(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t DataLeng
 	SPI_FLASH_Send((WriteAddr & 0xff00) >> 8);
 	SPI_FLASH_Send((WriteAddr & 0xff));
 	
-	//失能NSS信号线
 	//等待FLASH空闲
-	W25X_NSS_Disabled();
 	SPI_FLASH_WaitEnd();
 	
 	while(DataLength--)
@@ -117,4 +118,32 @@ void SPI_FLASH_PageWrite(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t DataLeng
 
 
 //SPI Flash 读数据
-
+//pBuffer		要读出的数据的地址
+//ReadAdd		FLASH中读数据的地址
+//DataLength	数据的长度
+void SPI_FLASH_Read_Data(uint8_t* pBuffer, uint32_t ReadAddr, uint16_t DataLength)
+{
+	//使能NSS信号线
+	//等待FLASH空闲
+	W25X_NSS_Enabled();
+	SPI_FLASH_WaitEnd();
+	
+	//发送写指令
+	//分别发送写地址的高位 中位 低位
+	SPI_FLASH_Send(W25X_ReadData);
+	SPI_FLASH_Send((ReadAddr & 0xff0000) >> 16);
+	SPI_FLASH_Send((ReadAddr & 0xff00) >> 8);
+	SPI_FLASH_Send((ReadAddr & 0xff));
+	
+	//将数据存入
+	while(DataLength--)
+	{
+		HAL_SPI_Receive(&hspi2, pBuffer, 1, 0xff);
+		pBuffer++;
+	}
+	
+	//失能NSS信号线
+	//等待FLASH空闲
+	W25X_NSS_Disabled();
+	SPI_FLASH_WaitEnd();
+}

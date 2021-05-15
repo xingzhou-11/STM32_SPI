@@ -21,10 +21,14 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "spi.h"
+#include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "w25q64.h"
+#include <stdio.h>
+#include <string.h>
 
 /* USER CODE END Includes */
 
@@ -35,6 +39,18 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+#define  FLASH_WriteAddress     0x00000
+#define  FLASH_ReadAddress      FLASH_WriteAddress
+#define  FLASH_SectorToErase    FLASH_WriteAddress
+
+//数据缓冲区长度
+//numel	返回所查询目标所含有的元素个数
+#define numel(a)		(sizeof(a) / sizeof(*(a)))
+//#define TxBufferSize1   (numel(TxBuffer1) - 1)
+//#define RxBufferSize1   (numel(TxBuffer1) - 1)
+#define BufferSize 		(numel(Tx_Buffer) - 1)
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -45,6 +61,10 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+
+uint32_t *p_FlashID;
+uint8_t Tx_Buffer[] = "stm32开发板\r\n";
+uint8_t Rx_Buffer[BufferSize];
 
 /* USER CODE END PV */
 
@@ -88,8 +108,32 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_SPI2_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-
+  
+  //这是一个 SPI FLASH 实验
+  printf("\r\n This is an SPI FLSH experiment \r\n");
+  
+  SPI_FLASH_ReadID(p_FlashID);
+  
+  while(*p_FlashID != '\0')
+  {
+	  printf("\r\nFlashID is 0x%X", *p_FlashID);
+	  p_FlashID++;
+  }
+  
+  //擦除扇区
+  SPI_FLASH_Sector_Erase(FLASH_SectorToErase);
+  
+  //写数据并打印所写的数据
+  SPI_FLASH_Page_Write(Tx_Buffer, FLASH_WriteAddress, BufferSize);
+  printf("\r\nThe data Written is: \r\n%s",  Tx_Buffer);
+  
+  //读数据并打印读到的数据
+  SPI_FLASH_Read_Data(Rx_Buffer, FLASH_ReadAddress, BufferSize);
+  printf("\r\nThe data Written is: \r\n%s",  Rx_Buffer);
+  
+  
   /* USER CODE END 2 */
 
   /* Infinite loop */
